@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Sector &times; Catalyst &times; Precision &mdash; Check-In</title>
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --card: #161616;
+      --card-checked: #0d1f0d;
+      --border: #2a2a2a;
+      --border-checked: #1a3a1a;
+      --text: #f0f0f0;
+      --text-dim: #888;
+      --accent: #c8a44e;
+      --green: #34c759;
+      --green-dim: #1a3a1a;
+      --red: #ff453a;
+      --member-badge: #c8a44e;
+      --guest-badge: #555;
+      --plus-one-badge: #6a5acd;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--bg);
+      padding: 16px 16px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .event-title {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--accent);
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .stats-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .stat {
+      flex: 1;
+      text-align: center;
+      padding: 8px 4px;
+      background: var(--card);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .stat-number {
+      font-size: 22px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    .stat.checked-in .stat-number { color: var(--green); }
+    .stat.members .stat-number { color: var(--accent); }
+
+    .search-bar {
+      position: relative;
+      margin-bottom: 12px;
+    }
+
+    .search-bar input {
+      width: 100%;
+      padding: 12px 16px 12px 42px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      font-size: 16px;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    .search-bar input:focus {
+      border-color: var(--accent);
+    }
+
+    .search-bar input::placeholder {
+      color: var(--text-dim);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+      font-size: 16px;
+      pointer-events: none;
+    }
+
+    .clear-search {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--text-dim);
+      color: var(--bg);
+      border: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      font-size: 13px;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .filter-btn {
+      flex-shrink: 0;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-dim);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .filter-btn.active {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+
+    .guest-list {
+      padding: 12px 16px 100px;
+    }
+
+    .guest-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      margin-bottom: 8px;
+      background: var(--card);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      transition: all 0.2s;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .guest-card.checked-in {
+      background: var(--card-checked);
+      border-color: var(--border-checked);
+    }
+
+    .guest-card:active {
+      transform: scale(0.985);
+    }
+
+    .check-circle {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .guest-card.checked-in .check-circle {
+      background: var(--green);
+      border-color: var(--green);
+    }
+
+    .checkmark {
+      display: none;
+      color: white;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .guest-card.checked-in .checkmark {
+      display: block;
+    }
+
+    .guest-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .guest-name {
+      font-size: 16px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .guest-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 3px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+
+    .badge.member {
+      background: rgba(200, 164, 78, 0.15);
+      color: var(--member-badge);
+    }
+
+    .badge.guest {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-dim);
+    }
+
+    .badge.plus-one {
+      background: rgba(106, 90, 205, 0.15);
+      color: var(--plus-one-badge);
+    }
+
+    .plus-one-of {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .checkin-time {
+      font-size: 11px;
+      color: var(--green);
+      margin-top: 2px;
+    }
+
+    .phone-section {
+      flex-shrink: 0;
+    }
+
+    .phone-btn {
+      background: rgba(200, 164, 78, 0.12);
+      border: 1px solid rgba(200, 164, 78, 0.3);
+      color: var(--accent);
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .phone-btn.has-phone {
+      background: rgba(52, 199, 89, 0.12);
+      border-color: rgba(52, 199, 89, 0.3);
+      color: var(--green);
+    }
+
+    /* Phone Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 200;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--card);
+      border-radius: 20px 20px 0 0;
+      padding: 24px 20px 40px;
+      width: 100%;
+      max-width: 500px;
+      animation: slideUp 0.25s ease-out;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .modal-subtitle {
+      font-size: 14px;
+      color: var(--text-dim);
+      margin-bottom: 20px;
+    }
+
+    .modal input[type="tel"] {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 18px;
+      outline: none;
+      margin-bottom: 16px;
+      -webkit-appearance: none;
+    }
+
+    .modal input[type="tel"]:focus {
+      border-color: var(--accent);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .modal-btn {
+      flex: 1;
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+    }
+
+    .modal-btn.cancel {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .modal-btn.save {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    .no-results {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-dim);
+    }
+
+    .no-results-icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+    }
+
+    .walk-in-btn {
+      position: fixed;
+      bottom: 24px;
+      right: 16px;
+      left: 16px;
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 16px;
+      border-radius: 14px;
+      background: var(--accent);
+      color: var(--bg);
+      font-size: 16px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(200, 164, 78, 0.3);
+      z-index: 50;
+    }
+
+    /* Walk-in Modal */
+    .walkin-modal .modal {
+      padding-bottom: 40px;
+    }
+
+    .walkin-modal input[type="text"],
+    .walkin-modal input[type="tel"] {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 16px;
+      outline: none;
+      margin-bottom: 12px;
+      -webkit-appearance: none;
+    }
+
+    .walkin-modal input:focus {
+      border-color: var(--accent);
+    }
+
+    .walkin-modal label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .field-group {
+      margin-bottom: 4px;
+    }
+
+    /* Confirmation toast */
+    .toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: var(--green);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 14px;
+      z-index: 300;
+      transition: transform 0.3s ease;
+      white-space: nowrap;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .toast.undo {
+      background: var(--red);
+    }
+
+    @media (min-width: 500px) {
+      .header { padding: 20px 24px 0; }
+      .guest-list { padding: 12px 24px 100px; max-width: 600px; margin: 0 auto; }
+      .event-title { font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="event-title">Sector &times; Catalyst &times; Precision &mdash; Wellness</div>
+
+  <div class="stats-row">
+    <div class="stat checked-in">
+      <div class="stat-number" id="checkedInCount">0</div>
+      <div class="stat-label">Checked In</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number" id="totalCount">0</div>
+      <div class="stat-label">Total</div>
+    </div>
+    <div class="stat members">
+      <div class="stat-number" id="memberCount">0</div>
+      <div class="stat-label">Members</div>
+    </div>
+  </div>
+
+  <div class="search-bar">
+    <span class="search-icon">&#x1F50D;</span>
+    <input type="text" id="searchInput" placeholder="Search guests..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    <button class="clear-search" id="clearSearch">&times;</button>
+  </div>
+
+  <div class="filter-row">
+    <button class="filter-btn active" data-filter="all">All</button>
+    <button class="filter-btn" data-filter="not-checked">Not Checked In</button>
+    <button class="filter-btn" data-filter="checked">Checked In</button>
+    <button class="filter-btn" data-filter="members">Members</button>
+    <button class="filter-btn" data-filter="guests">Non-Members</button>
+  </div>
+</div>
+
+<div class="guest-list" id="guestList"></div>
+
+<button class="walk-in-btn" id="walkInBtn">+ Add Walk-In Guest</button>
+
+<!-- Phone Number Modal -->
+<div class="modal-overlay" id="phoneModal">
+  <div class="modal">
+    <div class="modal-title" id="phoneModalName"></div>
+    <div class="modal-subtitle">Add or edit phone number</div>
+    <input type="tel" id="phoneInput" placeholder="(555) 123-4567" inputmode="tel">
+    <div class="modal-actions">
+      <button class="modal-btn cancel" id="phoneCancelBtn">Cancel</button>
+      <button class="modal-btn save" id="phoneSaveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Walk-in Modal -->
+<div class="modal-overlay walkin-modal" id="walkinModal">
+  <div class="modal">
+    <div class="modal-title">Add Walk-In Guest</div>
+    <div class="modal-subtitle">This person was not on the original guest list</div>
+    <div class="field-group">
+      <label>Full Name *</label>
+      <input type="text" id="walkinName" placeholder="Full name" autocomplete="off">
+    </div>
+    <div class="field-group">
+      <label>Phone Number</label>
+      <input type="tel" id="walkinPhone" placeholder="(555) 123-4567" inputmode="tel">
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" id="walkinCancelBtn">Cancel</button>
+      <button class="modal-btn save" id="walkinSaveBtn">Add & Check In</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// GUEST DATA — pre-loaded from CSV cross-reference
+// ============================================================
+const GUESTS = [
+  // { name, isMember, memberType, plusOneOf, checkedIn, checkedInTime, phone, isWalkIn }
+  { name: "Adam Lathram", isMember: false, plusOneOf: null },
+  { name: "Adam Zoia", isMember: true, memberType: "Founding Member", plusOneOf: null },
+  { name: "Agustin Maglione", isMember: false, plusOneOf: null },
+  { name: "Alex Verdone", isMember: false, plusOneOf: null },
+  { name: "Alexandre Soubev", isMember: false, plusOneOf: null },
+  { name: "Alston Chiang", isMember: true, memberType: "Member", plusOneOf: null },
+  { name: "Amit Parekh", isMember: true, memberType: "Next100", plusOneOf: null },
+  { name: "Andrew", isMember: false, plusOneOf: null },
+  { name: "Andrew Krasnow", isMember: false, plusOneOf: null },
+  { name: "Armando", isMember: false, plusOneOf: null },
+  { name: "Arne Neufang", isMember: false, plusOneOf: null },
+  { name: "Arvin", isMember: false, plusOneOf: null },
+  { name: "Bobby Tuohy", isMember: false, plusOneOf: null },
+  { name: "Brandon Borbor", isMember: false, plusOneOf: null },
+  { name: "Brandon Burrows", isMember: false, plusOneOf: null },
+  { name: "Brett Fraser", isMember: true, memberType: "Founding Member", plusOneOf: null },
+  { name: "Brian Connor", isMember: false, plusOneOf: null },
+  { name: "Bruno Rigonatti", isMember: true, memberType: "Founding Member", plusOneOf: null },
+  { name: "Cameron Carani", isMember: false, plusOneOf: null },
+  { name: "Can Remzi Ergen", isMember: true, memberType: "Founding Member", plusOneOf: null },
+  { name: "Collin Spencer", isMember: false, plusOneOf: null },
+  { name: "Danny Wein", isMember: false, plusOneOf: null },
+  { name: "David Chines", isMember: true, memberType: "Founding Member", plusOneOf: null },
+  { name: "David Polk", isMember: false, plusOneOf: null },
+  { name: "David Ruff", isMember: true, memberType: "Founding Member", plusOneOf: null },
+  { name: "David Scatterday", isMember: false, plusOneOf: null },
+  { name: "Eyal Arad", isMember: false, plusOneOf: null },
+  { name: "Fabian Palomera", isMember: false, plusOneOf: null },
+  { name: "Fionn", isMember: false, plusOneOf: null },
+  { name: "Gabe Vigeland", isMember: true, memberType: "Founding Member", plusOneOf: null },
+  { name: "Giuseppe Scarpa", isMember: false, plusOneOf: null },
+  { name: "Riccardo Grazia", isMember: false, plusOneOf: "Giuseppe Scarpa" },
+  { name: "Gregoire Dubois", isMember: true, memberType: "Founding Member", plusOneOf: null },
+  { name: "Hayes Elmore", isMember: true, memberType: "Member", plusOneOf: null },
+  { name: "Henrique", isMember: false, plusOneOf: null },
+  { name: "Henry", isMember: false, plusOneOf: null },
+  { name: "Henry Eckrich", isMember: false, plusOneOf: null },
+  { name: "Henry Kline", isMember: true, memberType: "Founding Member", plusOneOf: null },
+  { name: "Hunter Bell", isMember: false, plusOneOf: null },
+  { name: "Ian", isMember: false, plusOneOf: null },
+  { name: "Tristan Rodriguez", isMember: false, plusOneOf: "Ian" },
+  { name: "Ian Michael Crumm", isMember: false, plusOneOf: null },
+  { name: "Ignacio", isMember: false, plusOneOf: null },
+  { name: "Isaac Bar", isMember: false, plusOneOf: null },
+  { name: "Jack Larkins", isMember: false, plusOneOf: null },
+  { name: "Jack Lehane", isMember: true, memberType: "Founding Member", plusOneOf: null },
+  { name: "Jack Wagner", isMember: false, plusOneOf: null },
+  { name: "Jacob Moeller", isMember: true, memberType: "Founding Member", plusOneOf: null },
+  { name: "Jake Dunn", isMember: false, plusOneOf: null },
+  { name: "James Parker", isMember: false, plusOneOf: null },
+  { name: "Jesse O'Brien", isMember: false, plusOneOf: null },
+  { name: "Jez", isMember: false, plusOneOf: null },
+  { name: "Diederik de Sonnaville", isMember: false, plusOneOf: "Jez" },
+  { name: "Joao", isMember: false, plusOneOf: null },
+  { name: "John Bubniak", isMember: false, plusOneOf: null },
+  { name: "John Chiero", isMember: false, plusOneOf: null },
+  { name: "John Hilferty", isMember: false, plusOneOf: null },
+  { name: "Jordan Mankes", isMember: false, plusOneOf: null },
+  { name: "Josh Adan", isMember: false, plusOneOf: null },
+  { name: "JP Med", isMember: false, plusOneOf: null },
+  { name: "Justin Krasner", isMember: false, plusOneOf: null },
+  { name: "Justin Krasner's +1", isMember: false, plusOneOf: "Justin Krasner" },
+  { name: "Justin Lai", isMember: false, plusOneOf: null },
+  { name: "Justin San Antonio", isMember: true, memberType: "Founding Member", plusOneOf: null },
+  { name: "Kevin", isMember: false, plusOneOf: null },
+  { name: "Kian Talan", isMember: true, memberType: "Member", plusOneOf: null },
+  { name: "Kiernan Liberman", isMember: false, plusOneOf: null },
+  { name: "Kyle Gayle", isMember: false, plusOneOf: null },
+  { name: "Daniel Sauer", isMember: false, plusOneOf: "Kyle Gayle" },
+  { name: "Leo Chang", isMember: true, memberType: "Founding Member", plusOneOf: null },
+  { name: "Lucas Nealon", isMember: false, plusOneOf: null },
+  { name: "Luis Canelada", isMember: false, plusOneOf: null },
+  { name: "Luis Navarro", isMember: true, memberType: "Founding Member", plusOneOf: null },
+  { name: "Mark B", isMember: false, plusOneOf: null },
+  { name: "Mark Dorfman", isMember: true, memberType: "Founding Member", plusOneOf: null },
+  { name: "Markelle Smith", isMember: true, memberType: "Founding Member", plusOneOf: null },
+  { name: "Matheus Otero", isMember: true, memberType: "Founding Member", plusOneOf: null },
+  { name: "Matt Renart", isMember: true, memberType: "Founding Member", plusOneOf: null },
+  { name: "Matt S", isMember: false, plusOneOf: null },
+  { name: "Micah Porter", isMember: true, memberType: "Next100", plusOneOf: null },
+  { name: "Michael Couch", isMember: false, plusOneOf: null },
+  { name: "Nic P", isMember: false, plusOneOf: null },
+  { name: "Nick Dowdle", isMember: false, plusOneOf: null },
+  { name: "Nick Tebelekian", isMember: true, memberType: "Member", plusOneOf: null },
+  { name: "Niklas Lord", isMember: true, memberType: "Founding Member", plusOneOf: null },
+  { name: "Oleksii Ivanenko", isMember: true, memberType: "Next100", plusOneOf: null },
+  { name: "Orlando Duguay", isMember: false, plusOneOf: null },
+  { name: "Owen Millard", isMember: true, memberType: "Next100", plusOneOf: null },
+  { name: "Paulius Mendelis", isMember: true, memberType: "Founding Member", plusOneOf: null },
+  { name: "Perrin Quarshie", isMember: false, plusOneOf: null },
+  { name: "Peter Connolly", isMember: false, plusOneOf: null },
+  { name: "Peter Stack", isMember: true, memberType: "Founding Member", plusOneOf: null },
+  { name: "Pierre", isMember: false, plusOneOf: null },
+  { name: "Reese Sotiropoulos", isMember: true, memberType: "Member", plusOneOf: null },
+  { name: "Richard Geaney", isMember: true, memberType: "Member", plusOneOf: null },
+  { name: "Rickie Ashman", isMember: true, memberType: "Founding Member", plusOneOf: null },
+  { name: "Rob Etre", isMember: false, plusOneOf: null },
+  { name: "Ross Tucker", isMember: false, plusOneOf: null },
+  { name: "Russell Shapiro", isMember: true, memberType: "Next100", plusOneOf: null },
+  { name: "Sam Borenzweig", isMember: false, plusOneOf: null },
+  { name: "San", isMember: false, plusOneOf: null },
+  { name: "Scott", isMember: false, plusOneOf: null },
+  { name: "Sri Batchu", isMember: true, memberType: "Founding Member", plusOneOf: null },
+  { name: "Tae Hoon", isMember: false, plusOneOf: null },
+  { name: "Temidayo Aganga-Williams", isMember: false, plusOneOf: null },
+  { name: "Tigue Devine", isMember: true, memberType: "Founding Member", plusOneOf: null },
+  { name: "TJ Hammond", isMember: false, plusOneOf: null },
+  { name: "Tyler Merten", isMember: false, plusOneOf: null },
+  { name: "Tyler Sinclair Monteferrante", isMember: true, memberType: "Founding Member", plusOneOf: null },
+  { name: "Vincent L", isMember: true, memberType: "Founding Member", plusOneOf: null },
+  { name: "Vishal Thakur", isMember: false, plusOneOf: null },
+  { name: "Wes Spiro", isMember: true, memberType: "Founding Member", plusOneOf: null },
+  { name: "Yoni J. Schwartz", isMember: false, plusOneOf: null },
+];
+
+// ============================================================
+// STATE
+// ============================================================
+const STORAGE_KEY = "sector_checkin_2_28";
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch (e) {}
+  return null;
+}
+
+function saveState() {
+  const data = guests.map(g => ({
+    name: g.name,
+    checkedIn: g.checkedIn,
+    checkedInTime: g.checkedInTime,
+    phone: g.phone || null,
+    isWalkIn: g.isWalkIn || false,
+    isMember: g.isMember,
+    memberType: g.memberType || null,
+    plusOneOf: g.plusOneOf || null,
+  }));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+// Initialize guest list with saved state
+let guests = [];
+const saved = loadState();
+if (saved) {
+  // Merge saved state with base data
+  const savedMap = {};
+  saved.forEach(s => { savedMap[s.name] = s; });
+  guests = GUESTS.map(g => ({
+    ...g,
+    checkedIn: savedMap[g.name]?.checkedIn || false,
+    checkedInTime: savedMap[g.name]?.checkedInTime || null,
+    phone: savedMap[g.name]?.phone || null,
+    isWalkIn: false,
+  }));
+  // Add walk-ins from saved state
+  saved.filter(s => s.isWalkIn).forEach(s => {
+    if (!guests.find(g => g.name === s.name)) {
+      guests.push({ ...s });
+    }
+  });
+} else {
+  guests = GUESTS.map(g => ({
+    ...g,
+    checkedIn: false,
+    checkedInTime: null,
+    phone: null,
+    isWalkIn: false,
+  }));
+}
+
+// ============================================================
+// RENDERING
+// ============================================================
+let currentFilter = "all";
+let searchQuery = "";
+
+function getFilteredGuests() {
+  let filtered = [...guests];
+
+  // Search
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    filtered = filtered.filter(g => g.name.toLowerCase().includes(q));
+  }
+
+  // Filter
+  switch (currentFilter) {
+    case "not-checked":
+      filtered = filtered.filter(g => !g.checkedIn);
+      break;
+    case "checked":
+      filtered = filtered.filter(g => g.checkedIn);
+      break;
+    case "members":
+      filtered = filtered.filter(g => g.isMember);
+      break;
+    case "guests":
+      filtered = filtered.filter(g => !g.isMember);
+      break;
+  }
+
+  // Sort: unchecked first, then alphabetical
+  filtered.sort((a, b) => {
+    if (a.checkedIn !== b.checkedIn) return a.checkedIn ? 1 : -1;
+    return a.name.localeCompare(b.name);
+  });
+
+  return filtered;
+}
+
+function formatTime(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
+function renderGuests() {
+  const list = document.getElementById("guestList");
+  const filtered = getFilteredGuests();
+
+  if (filtered.length === 0) {
+    list.innerHTML = `
+      <div class="no-results">
+        <div class="no-results-icon">&#x1F50D;</div>
+        <div>No guests found</div>
+      </div>
+    `;
+    return;
+  }
+
+  list.innerHTML = filtered.map((g, i) => {
+    const realIdx = guests.indexOf(g);
+    const badgeClass = g.isMember ? "member" : (g.plusOneOf ? "plus-one" : "guest");
+    const badgeText = g.isMember ? (g.memberType || "Member") : (g.plusOneOf ? "+1" : "Guest");
+    const hasPhone = g.phone && g.phone.trim();
+
+    return `
+      <div class="guest-card ${g.checkedIn ? 'checked-in' : ''}" data-idx="${realIdx}">
+        <div class="check-circle" onclick="toggleCheckin(${realIdx}, event)">
+          <span class="checkmark">&#x2713;</span>
+        </div>
+        <div class="guest-info" onclick="toggleCheckin(${realIdx}, event)">
+          <div class="guest-name">${escapeHtml(g.name)}${g.isWalkIn ? ' <span style="font-size:11px;color:var(--text-dim)">(Walk-in)</span>' : ''}</div>
+          <div class="guest-meta">
+            <span class="badge ${badgeClass}">${badgeText}</span>
+            ${g.plusOneOf ? `<span class="plus-one-of">of ${escapeHtml(g.plusOneOf)}</span>` : ''}
+          </div>
+          ${g.checkedIn ? `<div class="checkin-time">Checked in ${formatTime(g.checkedInTime)}</div>` : ''}
+        </div>
+        <div class="phone-section">
+          <button class="phone-btn ${hasPhone ? 'has-phone' : ''}" onclick="openPhoneModal(${realIdx}, event)" title="${hasPhone ? g.phone : 'Add phone'}">
+            ${hasPhone ? '&#x260E;' : '&#x2B;'}
+          </button>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function updateStats() {
+  const checkedIn = guests.filter(g => g.checkedIn).length;
+  const total = guests.length;
+  const members = guests.filter(g => g.isMember).length;
+
+  document.getElementById("checkedInCount").textContent = checkedIn;
+  document.getElementById("totalCount").textContent = total;
+  document.getElementById("memberCount").textContent = members;
+}
+
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ============================================================
+// ACTIONS
+// ============================================================
+function toggleCheckin(idx, event) {
+  event?.stopPropagation();
+  const guest = guests[idx];
+  guest.checkedIn = !guest.checkedIn;
+  guest.checkedInTime = guest.checkedIn ? new Date().toISOString() : null;
+
+  saveState();
+  renderGuests();
+  updateStats();
+
+  showToast(
+    guest.checkedIn
+      ? `${guest.name} checked in`
+      : `${guest.name} check-in removed`,
+    !guest.checkedIn
+  );
+}
+
+let phoneModalIdx = null;
+
+function openPhoneModal(idx, event) {
+  event?.stopPropagation();
+  phoneModalIdx = idx;
+  const guest = guests[idx];
+  document.getElementById("phoneModalName").textContent = guest.name;
+  document.getElementById("phoneInput").value = guest.phone || "";
+  document.getElementById("phoneModal").classList.add("show");
+  setTimeout(() => document.getElementById("phoneInput").focus(), 100);
+}
+
+function closePhoneModal() {
+  document.getElementById("phoneModal").classList.remove("show");
+  phoneModalIdx = null;
+}
+
+function savePhone() {
+  if (phoneModalIdx === null) return;
+  const val = document.getElementById("phoneInput").value.trim();
+  guests[phoneModalIdx].phone = val;
+  saveState();
+  renderGuests();
+  closePhoneModal();
+  if (val) showToast("Phone number saved");
+}
+
+function openWalkinModal() {
+  document.getElementById("walkinName").value = "";
+  document.getElementById("walkinPhone").value = "";
+  document.getElementById("walkinModal").classList.add("show");
+  setTimeout(() => document.getElementById("walkinName").focus(), 100);
+}
+
+function closeWalkinModal() {
+  document.getElementById("walkinModal").classList.remove("show");
+}
+
+function addWalkIn() {
+  const name = document.getElementById("walkinName").value.trim();
+  if (!name) {
+    document.getElementById("walkinName").style.borderColor = "var(--red)";
+    return;
+  }
+  const phone = document.getElementById("walkinPhone").value.trim();
+
+  guests.push({
+    name,
+    isMember: false,
+    memberType: null,
+    plusOneOf: null,
+    checkedIn: true,
+    checkedInTime: new Date().toISOString(),
+    phone: phone || null,
+    isWalkIn: true,
+  });
+
+  saveState();
+  renderGuests();
+  updateStats();
+  closeWalkinModal();
+  showToast(`${name} added & checked in`);
+}
+
+function showToast(message, isUndo = false) {
+  const toast = document.getElementById("toast");
+  toast.textContent = message;
+  toast.className = "toast" + (isUndo ? " undo" : "");
+  requestAnimationFrame(() => {
+    toast.classList.add("show");
+  });
+  setTimeout(() => toast.classList.remove("show"), 2000);
+}
+
+// ============================================================
+// EVENT LISTENERS
+// ============================================================
+// Search
+const searchInput = document.getElementById("searchInput");
+const clearBtn = document.getElementById("clearSearch");
+
+searchInput.addEventListener("input", () => {
+  searchQuery = searchInput.value.trim();
+  clearBtn.style.display = searchQuery ? "flex" : "none";
+  renderGuests();
+});
+
+clearBtn.addEventListener("click", () => {
+  searchInput.value = "";
+  searchQuery = "";
+  clearBtn.style.display = "none";
+  renderGuests();
+  searchInput.focus();
+});
+
+// Filters
+document.querySelectorAll(".filter-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    currentFilter = btn.dataset.filter;
+    renderGuests();
+  });
+});
+
+// Phone modal
+document.getElementById("phoneCancelBtn").addEventListener("click", closePhoneModal);
+document.getElementById("phoneSaveBtn").addEventListener("click", savePhone);
+document.getElementById("phoneModal").addEventListener("click", (e) => {
+  if (e.target === e.currentTarget) closePhoneModal();
+});
+document.getElementById("phoneInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") savePhone();
+});
+
+// Walk-in modal
+document.getElementById("walkInBtn").addEventListener("click", openWalkinModal);
+document.getElementById("walkinCancelBtn").addEventListener("click", closeWalkinModal);
+document.getElementById("walkinSaveBtn").addEventListener("click", addWalkIn);
+document.getElementById("walkinModal").addEventListener("click", (e) => {
+  if (e.target === e.currentTarget) closeWalkinModal();
+});
+document.getElementById("walkinName").addEventListener("input", (e) => {
+  e.target.style.borderColor = "var(--border)";
+});
+document.getElementById("walkinName").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") document.getElementById("walkinPhone").focus();
+});
+document.getElementById("walkinPhone").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") addWalkIn();
+});
+
+// ============================================================
+// INIT
+// ============================================================
+renderGuests();
+updateStats();
+</script>
+</body>
+</html>
