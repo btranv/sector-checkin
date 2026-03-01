@@ -478,6 +478,33 @@
       background: var(--red);
     }
 
+    .export-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 12px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .export-btn:active {
+      background: var(--border);
+    }
+
+    .export-btn .icon {
+      font-size: 15px;
+    }
+
     @media (min-width: 500px) {
       .header { padding: 20px 24px 0; }
       .guest-list { padding: 12px 24px 100px; max-width: 600px; margin: 0 auto; }
@@ -504,6 +531,8 @@
       <div class="stat-label">Members</div>
     </div>
   </div>
+
+  <button class="export-btn" id="exportBtn"><span class="icon">&#x1F4E4;</span> Export Check-In Data</button>
 
   <div class="search-bar">
     <span class="search-icon">&#x1F50D;</span>
@@ -939,6 +968,67 @@ function showToast(message, isUndo = false) {
 }
 
 // ============================================================
+// EXPORT
+// ============================================================
+function exportData() {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const timeStr = now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+
+  // Build CSV
+  const headers = ["Name", "Status", "Member Type", "Checked In", "Check-In Time", "Phone", "Plus One Of", "Walk-In"];
+  const rows = guests.map(g => {
+    return [
+      `"${g.name}"`,
+      g.checkedIn ? "Checked In" : "Not Checked In",
+      g.isMember ? (g.memberType || "Member") : "Guest",
+      g.checkedIn ? "Yes" : "No",
+      g.checkedInTime ? new Date(g.checkedInTime).toLocaleString() : "",
+      `"${g.phone || ""}"`,
+      `"${g.plusOneOf || ""}"`,
+      g.isWalkIn ? "Yes" : "No",
+    ].join(",");
+  });
+
+  const csv = [headers.join(","), ...rows].join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const file = new File([csv], `sector-checkin-${now.toISOString().slice(0,10)}.csv`, { type: "text/csv" });
+
+  // Summary for share text
+  const checkedIn = guests.filter(g => g.checkedIn);
+  const summary = `Sector Check-In Export (${dateStr} ${timeStr})\n${checkedIn.length} of ${guests.length} checked in.\n\nChecked in:\n${checkedIn.map(g => `• ${g.name}${g.phone ? ' — ' + g.phone : ''}`).join("\n")}`;
+
+  // Try native share (mobile), fall back to download
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    navigator.share({
+      title: "Sector Check-In Data",
+      text: summary,
+      files: [file],
+    }).catch(() => downloadCSV(blob));
+  } else if (navigator.share) {
+    // Share text only if file sharing not supported
+    navigator.share({
+      title: "Sector Check-In Data",
+      text: summary,
+    }).catch(() => downloadCSV(blob));
+  } else {
+    downloadCSV(blob);
+  }
+}
+
+function downloadCSV(blob) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `sector-checkin-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast("CSV downloaded");
+}
+
+// ============================================================
 // EVENT LISTENERS
 // ============================================================
 // Search
@@ -978,6 +1068,9 @@ document.getElementById("phoneModal").addEventListener("click", (e) => {
 document.getElementById("phoneInput").addEventListener("keydown", (e) => {
   if (e.key === "Enter") savePhone();
 });
+
+// Export
+document.getElementById("exportBtn").addEventListener("click", exportData);
 
 // Walk-in modal
 document.getElementById("walkInBtn").addEventListener("click", openWalkinModal);
